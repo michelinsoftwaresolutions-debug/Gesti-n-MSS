@@ -643,3 +643,25 @@ window.logout = function() {
     
     showAlert('Sesión cerrada correctamente', 'success');
 };
+// --- FUNCIÓN PARA CAMBIAR ENTRE LOGIN Y REGISTRO ---
+let isRegistering = false;
+
+function toggleAuthMode() {
+    isRegistering = !isRegistering;
+    const loginTitle = document.querySelector('.login-title');
+    const loginBtn = document.getElementById('loginBtn');
+    const loginSwitch = document.querySelector('.login-switch');
+    const forgotPassword = document.querySelector('.forgot-password');
+
+    if (isRegistering) {
+        if (loginTitle) loginTitle.textContent = 'Registro - Gestión MSS';
+        if (loginBtn) loginBtn.textContent = 'Registrarse';
+        if (loginSwitch) loginSwitch.textContent = '¿Ya tienes cuenta? Inicia Sesión';
+        if (forgotPassword) forgotPassword.style.display = 'none';
+    } else {
+        if (loginTitle) loginTitle.textContent = 'Gestión MSS';
+        if (loginBtn) loginBtn.textContent = 'Iniciar Sesión';
+        if (loginSwitch) loginSwitch.textContent = '¿No tienes cuenta? Regístrate';
+        if (forgotPassword) forgotPassword.style.display = 'block';
+    }
+}
