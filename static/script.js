@@ -307,17 +307,21 @@ function updateProductsTable(productsToShow = products) {
     tbody.innerHTML = productsToShow.map(product => {
         const stockStatus = getStockStatus(product);
         const rowClass = stockStatus === 'Sin stock' ? 'out-of-stock' : (stockStatus === 'Stock bajo' ? 'low-stock' : '');
-        const margin = product.price > 0 ? (((product.price - product.costPrice) / product.price) * 100).toFixed(1) : 0;
+        
+        // Asignación segura de valores numéricos para evitar que toFixed() falle
+        const costPrice = Number(product.costPrice ?? product.cost_price ?? 0);
+        const price = Number(product.price ?? 0);
+        const margin = price > 0 ? (((price - costPrice) / price) * 100).toFixed(1) : 0;
 
         return `
             <tr class="${rowClass}">
-                <td><strong>${product.code}</strong></td>
-                <td>${product.name}</td>
-                <td><span class="category-tag">${product.categoryName}</span></td>
-                <td>$${product.costPrice.toFixed(2)}</td>
-                <td>$${product.price.toFixed(2)}</td>
+                <td><strong>${product.code || '-'}</strong></td>
+                <td>${product.name || '-'}</td>
+                <td><span class="category-tag">${product.categoryName || '-'}</span></td>
+                <td>$${costPrice.toFixed(2)}</td>
+                <td>$${price.toFixed(2)}</td>
                 <td class="${margin > 0 ? 'profit-positive' : 'profit-negative'}">${margin}%</td>
-                <td><strong>${product.stock}</strong></td>
+                <td><strong>${product.stock ?? 0}</strong></td>
                 <td style="font-family: monospace; font-size: 12px;">${product.barcode || '-'}</td>
                 <td><span class="status-badge">${stockStatus}</span></td>
                 <td class="product-actions">
@@ -593,6 +597,10 @@ function showAlert(message, type = 'success') {
         if (alertDiv.parentNode) alertDiv.remove();
     }, 4000);
 }
+
+window.logout = function() {
+    showAlert('Sesión cerrada correctamente', 'success');
+};
 
 window.logout = function() {
     showAlert('Sesión cerrada correctamente', 'success');
