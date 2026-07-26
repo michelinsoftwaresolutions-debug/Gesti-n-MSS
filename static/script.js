@@ -27,8 +27,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // --- PANTALLA Y MÁSCARA DE CARGA ---
 function showMainApp() {
-    document.getElementById('loginScreen').style.display = 'none';
-    document.getElementById('mainApp').style.display = 'block';
+    const login = document.getElementById('loginScreen');
+    const main = document.getElementById('mainApp');
+    if (login) login.style.display = 'none';
+    if (main) main.style.display = 'block';
 }
 
 function showLoading(show) {
@@ -98,7 +100,7 @@ window.showSection = function(sectionName) {
 
     const activeSection = document.getElementById(sectionName);
     if (activeSection) activeSection.classList.add('active');
-    if (event && event.target) event.target.classList.add('active');
+    if (window.event && window.event.target) window.event.target.classList.add('active');
 
     updateSectionData(sectionName);
 };
@@ -176,7 +178,7 @@ window.clearCategoryForm = function() {
 window.searchCategories = function() {
     const searchTerm = document.getElementById('categorySearch').value.toLowerCase();
     const filtered = categories.filter(c =>
-        c.name.toLowerCase().includes(searchTerm) ||
+        (c.name && c.name.toLowerCase().includes(searchTerm)) ||
         (c.description && c.description.toLowerCase().includes(searchTerm))
     );
     updateCategoriesTable(filtered);
@@ -193,7 +195,7 @@ function updateCategoriesTable(categoriesToShow = categories) {
 
     tbody.innerHTML = categoriesToShow.map(category => `
         <tr>
-            <td><strong>${category.name}</strong></td>
+            <td><strong>${category.name || '-'}</strong></td>
             <td>${category.description || '-'}</td>
             <td><span class="category-tag">${category.product_count || 0} productos</span></td>
             <td>-</td>
@@ -216,12 +218,12 @@ function updateProductCategories() {
 
         categories.forEach(category => {
             const option = document.createElement('option');
-            option.value = category.id;
+            option.value = category.id || category._id;
             option.textContent = category.name;
             select.appendChild(option);
         });
 
-        if (currentValue && categories.find(c => c.id === currentValue)) {
+        if (currentValue && categories.find(c => (c.id || c._id) === currentValue)) {
             select.value = currentValue;
         }
     });
@@ -287,8 +289,8 @@ window.clearProductForm = function() {
 window.searchProducts = function() {
     const searchTerm = document.getElementById('productSearch').value.toLowerCase();
     const filtered = products.filter(p =>
-        p.name.toLowerCase().includes(searchTerm) ||
-        p.code.toLowerCase().includes(searchTerm) ||
+        (p.name && p.name.toLowerCase().includes(searchTerm)) ||
+        (p.code && p.code.toLowerCase().includes(searchTerm)) ||
         (p.categoryName && p.categoryName.toLowerCase().includes(searchTerm)) ||
         (p.barcode && p.barcode.includes(searchTerm))
     );
@@ -308,7 +310,6 @@ function updateProductsTable(productsToShow = products) {
         const stockStatus = getStockStatus(product);
         const rowClass = stockStatus === 'Sin stock' ? 'out-of-stock' : (stockStatus === 'Stock bajo' ? 'low-stock' : '');
         
-        // Asignación segura de valores numéricos para evitar que toFixed() falle
         const costPrice = Number(product.costPrice ?? product.cost_price ?? 0);
         const price = Number(product.price ?? 0);
         const margin = price > 0 ? (((price - costPrice) / price) * 100).toFixed(1) : 0;
@@ -333,8 +334,10 @@ function updateProductsTable(productsToShow = products) {
 }
 
 function getStockStatus(product) {
-    if (product.stock === 0) return 'Sin stock';
-    if (product.stock <= product.minStock) return 'Stock bajo';
+    const stock = product.stock ?? 0;
+    const minStock = product.minStock ?? 5;
+    if (stock === 0) return 'Sin stock';
+    if (stock <= minStock) return 'Stock bajo';
     return 'Disponible';
 }
 
@@ -356,29 +359,34 @@ function handleBarcodeScan(event) {
 }
 
 function addProductToCartByBarcode(product) {
-    if (product.stock <= 0) {
+    const stock = product.stock ?? 0;
+    if (stock <= 0) {
         showAlert(`Stock insuficiente para "${product.name}".`, 'error');
         return;
     }
 
-    const existingItem = cart.find(item => item.productId === product.id);
+    const productId = product.id || product._id;
+    const price = Number(product.price ?? 0);
+    const costPrice = Number(product.costPrice ?? product.cost_price ?? 0);
+
+    const existingItem = cart.find(item => item.productId === productId);
     if (existingItem) {
-        if (existingItem.quantity + 1 > product.stock) {
+        if (existingItem.quantity + 1 > stock) {
             showAlert(`Stock insuficiente. Ya tiene ${existingItem.quantity} en el carrito.`, 'error');
             return;
         }
         existingItem.quantity += 1;
-        existingItem.subtotal = existingItem.quantity * existingItem.price;
-        existingItem.profit = existingItem.quantity * (existingItem.price - existingItem.costPrice);
+        existingItem.subtotal = existingItem.quantity * price;
+        existingItem.profit = existingItem.quantity * (price - costPrice);
     } else {
         cart.push({
-            productId: product.id,
+            productId: productId,
             productName: product.name,
             quantity: 1,
-            price: product.price,
-            costPrice: product.costPrice,
-            subtotal: product.price,
-            profit: product.price - product.costPrice
+            price: price,
+            costPrice: costPrice,
+            subtotal: price,
+            profit: price - costPrice
         });
     }
     updateCartTable();
@@ -387,9 +395,10 @@ function addProductToCartByBarcode(product) {
 
 window.selectProduct = function() {
     const productId = document.getElementById('saleProduct').value;
-    const product = products.find(p => p.id === productId);
+    const product = products.find(p => (p.id || p._id) === productId);
     if (product) {
-        document.getElementById('salePrice').value = product.price;
+        const price = Number(product.price ?? 0);
+        document.getElementById('salePrice').value = price;
         document.getElementById('saleQuantity').value = 1;
         updateSaleSubtotal();
     } else {
@@ -415,8 +424,11 @@ window.addToSale = function() {
         return;
     }
 
-    const product = products.find(p => p.id === productId);
-    if (!product || quantity > product.stock) {
+    const product = products.find(p => (p.id || p._id) === productId);
+    const stock = product ? (product.stock ?? 0) : 0;
+    const costPrice = product ? Number(product.costPrice ?? product.cost_price ?? 0) : 0;
+
+    if (!product || quantity > stock) {
         showAlert('Stock insuficiente o producto no válido', 'error');
         return;
     }
@@ -426,9 +438,9 @@ window.addToSale = function() {
         productName: product.name,
         quantity,
         price,
-        costPrice: product.costPrice,
+        costPrice,
         subtotal: quantity * price,
-        profit: quantity * (price - product.costPrice)
+        profit: quantity * (price - costPrice)
     });
 
     updateCartTable();
@@ -459,20 +471,25 @@ function updateCartTable() {
         return;
     }
 
-    const total = cart.reduce((sum, item) => sum + item.subtotal, 0);
-    const totalCost = cart.reduce((sum, item) => sum + (item.quantity * item.costPrice), 0);
-    const totalProfit = cart.reduce((sum, item) => sum + item.profit, 0);
+    const total = cart.reduce((sum, item) => sum + (item.subtotal || 0), 0);
+    const totalCost = cart.reduce((sum, item) => sum + ((item.quantity || 0) * (item.costPrice || 0)), 0);
+    const totalProfit = cart.reduce((sum, item) => sum + (item.profit || 0), 0);
 
-    tbody.innerHTML = cart.map((item, index) => `
-        <tr>
-            <td>${item.productName}</td>
-            <td>${item.quantity}</td>
-            <td>$${item.price.toFixed(2)}</td>
-            <td>$${item.subtotal.toFixed(2)}</td>
-            <td class="${item.profit >= 0 ? 'profit-positive' : 'profit-negative'}">$${item.profit.toFixed(2)}</td>
-            <td><button class="btn btn-danger btn-small" onclick="removeFromCart(${index})">🗑️</button></td>
-        </tr>
-    `).join('');
+    tbody.innerHTML = cart.map((item, index) => {
+        const price = Number(item.price ?? 0);
+        const subtotal = Number(item.subtotal ?? 0);
+        const profit = Number(item.profit ?? 0);
+        return `
+            <tr>
+                <td>${item.productName || '-'}</td>
+                <td>${item.quantity || 0}</td>
+                <td>$${price.toFixed(2)}</td>
+                <td>$${subtotal.toFixed(2)}</td>
+                <td class="${profit >= 0 ? 'profit-positive' : 'profit-negative'}">$${profit.toFixed(2)}</td>
+                <td><button class="btn btn-danger btn-small" onclick="removeFromCart(${index})">🗑️</button></td>
+            </tr>
+        `;
+    }).join('');
 
     if (totalElement) totalElement.textContent = total.toFixed(2);
     if (totalCostElement) totalCostElement.textContent = totalCost.toFixed(2);
@@ -523,11 +540,17 @@ window.clearCart = function() {
 };
 
 function clearSaleForm() {
-    document.getElementById('saleProduct').value = '';
-    document.getElementById('saleQuantity').value = '';
-    document.getElementById('salePrice').value = '';
-    document.getElementById('saleSubtotal').value = '';
-    document.getElementById('customerName').value = '';
+    const productSelect = document.getElementById('saleProduct');
+    const quantityInput = document.getElementById('saleQuantity');
+    const priceInput = document.getElementById('salePrice');
+    const subtotalInput = document.getElementById('saleSubtotal');
+    const customerInput = document.getElementById('customerName');
+
+    if (productSelect) productSelect.value = '';
+    if (quantityInput) quantityInput.value = '';
+    if (priceInput) priceInput.value = '';
+    if (subtotalInput) subtotalInput.value = '';
+    if (customerInput) customerInput.value = '';
 }
 
 function updateSaleProducts() {
@@ -535,10 +558,11 @@ function updateSaleProducts() {
     if (!select) return;
 
     select.innerHTML = '<option value="">Seleccionar producto...</option>';
-    products.filter(p => p.stock > 0).forEach(product => {
+    products.filter(p => (p.stock ?? 0) > 0).forEach(product => {
         const option = document.createElement('option');
-        option.value = product.id;
-        option.textContent = `${product.name} - $${product.price.toFixed(2)} (Stock: ${product.stock})`;
+        option.value = product.id || product._id;
+        const price = Number(product.price ?? 0);
+        option.textContent = `${product.name} - $${price.toFixed(2)} (Stock: ${product.stock ?? 0})`;
         select.appendChild(option);
     });
 }
@@ -552,7 +576,7 @@ function updateDashboard() {
     if (totalProd) totalProd.textContent = products.length;
     if (totalCat) totalCat.textContent = categories.length;
 
-    const lowStockList = products.filter(p => p.stock <= p.minStock);
+    const lowStockList = products.filter(p => (p.stock ?? 0) <= (p.minStock ?? 5));
     if (lowStock) lowStock.textContent = lowStockList.length;
 
     updateLowStockTable(lowStockList);
@@ -569,10 +593,10 @@ function updateLowStockTable(lowStockItems) {
 
     tbody.innerHTML = lowStockItems.map(product => `
         <tr class="low-stock">
-            <td><strong>${product.name}</strong></td>
-            <td><span class="category-tag">${product.categoryName}</span></td>
-            <td><strong>${product.stock}</strong></td>
-            <td>${product.minStock}</td>
+            <td><strong>${product.name || '-'}</strong></td>
+            <td><span class="category-tag">${product.categoryName || '-'}</span></td>
+            <td><strong>${product.stock ?? 0}</strong></td>
+            <td>${product.minStock ?? 5}</td>
             <td style="font-family: monospace; font-size: 12px;">${product.barcode || '-'}</td>
             <td><button class="btn btn-warning btn-small" onclick="showSection('products')">📦 Reabastecer</button></td>
         </tr>
@@ -597,10 +621,6 @@ function showAlert(message, type = 'success') {
         if (alertDiv.parentNode) alertDiv.remove();
     }, 4000);
 }
-
-window.logout = function() {
-    showAlert('Sesión cerrada correctamente', 'success');
-};
 
 window.logout = function() {
     showAlert('Sesión cerrada correctamente', 'success');
