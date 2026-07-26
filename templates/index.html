@@ -740,17 +740,25 @@ gap: 10px;
 </div>
 
 <div class="login-container" id="loginScreen">
-<div class="login-card">
-<div class="login-logo">🏪</div>
-<h1 class="login-title">Sistema de Gestión</h1>
-<form class="login-form" id="loginForm">
-<input type="email" class="login-input" id="loginEmail" placeholder="Email" required>
-<input type="password" class="login-input" id="loginPassword" placeholder="Contraseña" required>
-<button type="submit" class="login-btn" id="loginBtn">Iniciar Sesión</button>
-</form>
-<div class="login-switch" onclick="toggleAuthMode()">¿No tienes cuenta? Regístrate</div>
-<div class="forgot-password" onclick="resetPassword()">¿Olvidaste tu contraseña?</div>
-</div>
+    <div class="login-card">
+        <div class="login-logo">🏪</div>
+        <h1 class="login-title">Gestión MSS</h1>
+        <form class="login-form" id="loginForm">
+            <input type="email" class="login-input" id="loginEmail" placeholder="Email" required>
+            
+            <!-- Contenedor de contraseña con el botón del ojo -->
+            <div style="position: relative; display: flex; align-items: center;">
+                <input type="password" class="login-input" id="loginPassword" placeholder="Contraseña" required style="width: 100%; padding-right: 45px;">
+                <button type="button" id="togglePasswordBtn" style="position: absolute; right: 15px; background: none; border: none; cursor: pointer; font-size: 18px; color: #666;">
+                    👁️
+                </button>
+            </div>
+
+            <button type="submit" class="login-btn" id="loginBtn">Iniciar Sesión</button>
+        </form>
+        <div class="login-switch" onclick="toggleAuthMode()">¿No tienes cuenta? Regístrate</div>
+        <div class="forgot-password" onclick="resetPassword()">¿Olvidaste tu contraseña?</div>
+    </div>
 </div>
 
 <div class="app-container" id="mainApp">
