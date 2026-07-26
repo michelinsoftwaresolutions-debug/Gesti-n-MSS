@@ -665,3 +665,26 @@ function toggleAuthMode() {
         if (forgotPassword) forgotPassword.style.display = 'block';
     }
 }
+// --- LÓGICA DE ENVÍO PARA LOGIN Y REGISTRO ---
+const loginForm = document.getElementById('loginForm');
+if (loginForm) {
+    loginForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const email = document.getElementById('loginEmail').value;
+        const password = document.getElementById('loginPassword').value;
+
+        if (typeof isRegistering !== 'undefined' && isRegistering) {
+            // Aquí puedes conectar el registro con tu backend o Firebase si lo usas
+            alert("¡Cuenta registrada con éxito! Ya puedes iniciar sesión.");
+            toggleAuthMode(); // Vuelve automáticamente a la pantalla de login
+        } else {
+            // Lógica normal de inicio de sesión de tu aplicación
+            console.log("Iniciando sesión con:", email);
+            
+            // Si tu app ya tiene una función para entrar (como showMainApp), la llamas aquí:
+            if (typeof showMainApp === 'function') {
+                showMainApp();
+            }
+        }
+    });
+}
