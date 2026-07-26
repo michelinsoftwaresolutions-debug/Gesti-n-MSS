@@ -15,13 +15,21 @@ let currentEditingProduct = null;
 let currentEditingCategory = null;
 
 // Inicialización de la App
-document.addEventListener('DOMContentLoaded', function() {
-    showMainApp();
-    loadUserData();
+document.addEventListener('DOMContentLoaded', () => {
+    const togglePasswordBtn = document.getElementById('togglePasswordBtn');
+    const loginPassword = document.getElementById('loginPassword');
 
-    const barcodeInput = document.getElementById('saleBarcodeScanInput');
-    if (barcodeInput) {
-        barcodeInput.addEventListener('keyup', handleBarcodeScan);
+    if (togglePasswordBtn && loginPassword) {
+        togglePasswordBtn.addEventListener('click', () => {
+            const currentType = loginPassword.getAttribute('type');
+            if (currentType === 'password') {
+                loginPassword.setAttribute('type', 'text');
+                togglePasswordBtn.textContent = '🙈';
+            } else {
+                loginPassword.setAttribute('type', 'password');
+                togglePasswordBtn.textContent = '👁️';
+            }
+        });
     }
 });
 
