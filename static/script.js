@@ -623,5 +623,15 @@ function showAlert(message, type = 'success') {
 }
 
 window.logout = function() {
+    const loginScreen = document.getElementById('loginScreen');
+    const mainApp = document.getElementById('mainApp');
+
+    // Ocultar el panel principal y mostrar el login
+    if (mainApp) mainApp.style.display = 'none';
+    if (loginScreen) loginScreen.style.display = 'block';
+
+    // Limpiar el carrito en memoria
+    cart = [];
+    
     showAlert('Sesión cerrada correctamente', 'success');
 };
